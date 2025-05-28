@@ -13,13 +13,13 @@ function print_curl_error(CurlHandle $ch, string $url): bool
 
 function get_http_response_status_line(array $headers): ?string
 {
-    $s = array_find($headers, fn($value, $key) => str_starts_with($value, "HTTP/"));
+    $s = array_find($headers, fn($value, $key) => stripos($value, "HTTP/") === 0);
     return $s;
 }
 
 function get_http_response_header(array $headers, string $name): ?string
 {
-    if (($line = array_find($headers, fn($value, $key) => str_starts_with($value, "$name:"))) === null)
+    if (($line = array_find($headers, fn($value, $key) => stripos($value, "$name:") === 0)) === null)
         return null;
 
     $s = substr($line, strlen("$name:"));
