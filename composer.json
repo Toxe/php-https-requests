@@ -1,4 +1,6 @@
 {
     "name": "toxe/php-https-requests",
-    "require": {}
+    "require": {
+        "league/climate": "^3.10"
+    }
 }
