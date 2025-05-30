@@ -57,6 +57,7 @@ function request(CLImate $terminal, string $url): bool
 
     $options = [
         CURLOPT_URL => $url,
+        CURLOPT_TIMEOUT => 5,
         CURLOPT_HEADER => false,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HEADERFUNCTION => function (CurlHandle $ch, string $header) use (&$headers): int {
