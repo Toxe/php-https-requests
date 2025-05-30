@@ -1,15 +1,8 @@
 <?php
 declare(strict_types=1);
+use League\CLImate\CLImate;
 
-function print_curl_error(CurlHandle $ch, string $url): bool
-{
-    $errno = curl_errno($ch);
-    $error = curl_error($ch);
-    curl_close($ch);
-    echo "$url: $error ($errno)\n";
-
-    return false;
-}
+require_once("vendor/autoload.php");
 
 function get_http_response_status_line(array $headers): ?string
 {
@@ -26,21 +19,39 @@ function get_http_response_header(array $headers, string $name): ?string
     return trim($s);
 }
 
-function print_results(CurlHandle $ch, string $url, array $headers): void
+function print_curl_error(CLImate $terminal, CurlHandle $ch): bool
+{
+    $errno = curl_errno($ch);
+    $error = curl_error($ch);
+    curl_close($ch);
+    $terminal->red()->out("(curl error $errno) $error");
+
+    return false;
+}
+
+function print_results(CLImate $terminal, CurlHandle $ch, array $headers): void
 {
     $info = curl_getinfo($ch);
-    echo "$url: " . get_http_response_status_line($headers);
+    $status = (int) $info["http_code"];
+    $status_line = get_http_response_status_line($headers);
 
-    switch ($info["http_code"]) {
+    if ($status >= 200 && $status < 300)
+        $terminal->green()->inline($status_line);
+    else if ($status >= 300 && $status < 400)
+        $terminal->yellow()->inline($status_line);
+    else
+        $terminal->red()->inline($status_line);
+
+    switch ($status) {
         case 301:
-            echo " (" . get_http_response_header($headers, "Location") . ")";
+            $terminal->yellow()->inline(" --> " . get_http_response_header($headers, "Location"));
             break;
     }
 
-    echo "\n";
+    $terminal->br();
 }
 
-function request(string $url): bool
+function request(CLImate $terminal, string $url): bool
 {
     $headers = [];
 
@@ -55,26 +66,35 @@ function request(string $url): bool
     ];
 
     if (($ch = curl_init()) === false)
-        return print_curl_error($ch, $url);
+        return print_curl_error($terminal, $ch);
 
     if (!curl_setopt_array($ch, $options))
-        return print_curl_error($ch, $url);
+        return print_curl_error($terminal, $ch);
 
     if (($content = curl_exec($ch)) === false)
-        return print_curl_error($ch, $url);
+        return print_curl_error($terminal, $ch);
 
-    print_results($ch, $url, $headers);
+    print_results($terminal, $ch, $headers);
     curl_close($ch);
 
     return true;
 }
 
-request("http://curl.se");
-request("http://httpbin.org/ip");
-request("http://www.microsoft.com");
-request("http://www.mozilla.org");
+$terminal = new CLImate;
 
-request("https://curl.se");
-request("https://httpbin.org/ip");
-request("https://www.microsoft.com");
-request("https://www.mozilla.org");
+$urls = [
+    "curl.se",
+    "httpbin.org/ip",
+    "www.microsoft.com",
+    "www.mozilla.org",
+];
+
+$longest_url_length = (int) array_reduce($urls, fn($length, $url) => max($length, strlen($url)), 0) + 1;
+
+foreach ($urls as $url) {
+    foreach (["HTTP", "HTTPS"] as $protocol) {
+        $terminal->inline(str_pad($protocol, 6));
+        $terminal->bold()->inline(str_pad($url, $longest_url_length + 1));
+        request($terminal, "$protocol://$url");
+    }
+}
