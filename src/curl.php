@@ -66,6 +66,12 @@ function request(CLImate $terminal, string $url): bool
         },
     ];
 
+    // HTTPS options
+    if (stripos($url, "https://") === 0) {
+        $options[CURLOPT_SSL_VERIFYHOST] = 2;
+        $options[CURLOPT_SSL_VERIFYPEER] = true;
+    }
+
     if (($ch = curl_init()) === false)
         return print_curl_error($terminal, $ch);
 
