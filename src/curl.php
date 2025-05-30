@@ -24,6 +24,7 @@ function print_curl_error(CLImate $terminal, CurlHandle $ch): bool
     $errno = curl_errno($ch);
     $error = curl_error($ch);
     curl_close($ch);
+    $terminal->inline(str_repeat(' ', 7 + 2 + 11 + 2 + 2));
     $terminal->red()->out("(curl error $errno) $error");
 
     return false;
@@ -34,6 +35,12 @@ function print_results(CLImate $terminal, CurlHandle $ch, array $headers): void
     $info = curl_getinfo($ch);
     $status = (int) $info["http_code"];
     $status_line = get_http_response_status_line($headers);
+    $total_size = ($info["header_size"] + $info["size_download"]) / 1024.0;
+    $total_time = (int) round($info["total_time"] * 1000.0);
+
+    $terminal->inline(str_pad("$total_time ms", 7 + 2, ' ', STR_PAD_LEFT));
+    $terminal->inline(str_pad(sprintf("%.02f KB", $total_size), 11 + 2, ' ', STR_PAD_LEFT));
+    $terminal->inline("  ");
 
     if ($status >= 200 && $status < 300)
         $terminal->green()->inline($status_line);
@@ -90,12 +97,12 @@ function request(CLImate $terminal, string $url): bool
 $urls = require("config.php");
 $terminal = new CLImate;
 
-$longest_url_length = (int) array_reduce($urls, fn($length, $url) => max($length, strlen($url)), 0) + 1;
+$longest_url_length = (int) array_reduce($urls, fn($length, $url) => max($length, strlen($url)), 0);
 
 foreach ($urls as $url) {
-    foreach (["HTTP", "HTTPS"] as $protocol) {
-        $terminal->inline(str_pad($protocol, 6));
-        $terminal->bold()->inline(str_pad($url, $longest_url_length + 1));
-        request($terminal, "$protocol://$url");
+    foreach (["http", "https"] as $scheme) {
+        $terminal->inline(str_pad(strtoupper($scheme), 5 + 2));
+        $terminal->bold()->inline(str_pad($url, $longest_url_length));
+        request($terminal, "$scheme://$url");
     }
 }
