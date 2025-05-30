@@ -1,0 +1,8 @@
+<?php
+
+return [
+    "curl.se",
+    "httpbin.org/ip",
+    "www.microsoft.com",
+    "www.mozilla.org",
+];

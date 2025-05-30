@@ -80,14 +80,8 @@ function request(CLImate $terminal, string $url): bool
     return true;
 }
 
+$urls = require("config.php");
 $terminal = new CLImate;
-
-$urls = [
-    "curl.se",
-    "httpbin.org/ip",
-    "www.microsoft.com",
-    "www.mozilla.org",
-];
 
 $longest_url_length = (int) array_reduce($urls, fn($length, $url) => max($length, strlen($url)), 0) + 1;
 
