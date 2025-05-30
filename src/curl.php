@@ -21,14 +21,10 @@ function get_http_response_header(array $headers, string $name): ?string
 
 function get_http_version_text(int $version): string
 {
-    switch ($version) {
-        case CURL_HTTP_VERSION_1_1:
-            return "HTTP/1.1";
-        case CURL_HTTP_VERSION_2:
-            return "HTTP/2";
-        default:
-            return "???";
-    }
+    return match ($version) {
+        CURL_HTTP_VERSION_1_1 => "HTTP/1.1",
+        CURL_HTTP_VERSION_2 => "HTTP/2",
+    };
 }
 
 function print_curl_error(CLImate $terminal, CurlHandle $ch): bool
